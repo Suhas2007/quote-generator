@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quote Generator</title>
+
+  <!-- Google Fonts: importing two fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* =============================
+       CSS VARIABLES — edit colors here
+       ============================= */
+    :root {
+      --bg: #0e0e0e;
+      --card: #1a1a1a;
+      --accent: #f5c842;
+      --text: #f0ece4;
+      --muted: #888;
+    }
+
+    /* =============================
+       RESET & BASE
+       ============================= */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+
+      /* CENTER everything on screen */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* =============================
+       CARD — the main box
+       ============================= */
+    .card {
+      background: var(--card);
+      border: 1px solid #2e2e2e;
+      border-radius: 20px;
+      max-width: 620px;
+      width: 100%;
+      padding: 52px 48px 44px;
+      position: relative;
+
+      /* subtle shadow for depth */
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    }
+
+    /* big decorative quote mark */
+    .card::before {
+      content: '"';
+      font-family: 'Playfair Display', serif;
+      font-size: 160px;
+      color: var(--accent);
+      opacity: 0.12;
+      position: absolute;
+      top: -20px;
+      left: 28px;
+      line-height: 1;
+      pointer-events: none; /* so it doesn't block clicks */
+    }
+
+    /* =============================
+       QUOTE TEXT
+       ============================= */
+    #quote-text {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: clamp(1.2rem, 3vw, 1.7rem); /* responsive font size */
+      line-height: 1.6;
+      color: var(--text);
+      min-height: 100px;
+
+      /* smooth fade when quote changes */
+      transition: opacity 0.4s ease;
+    }
+
+    /* =============================
+       AUTHOR NAME
+       ============================= */
+    #quote-author {
+      margin-top: 24px;
+      font-size: 0.9rem;
+      font-weight: 300;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+
+      transition: opacity 0.4s ease;
+    }
+
+    /* class we add during fade-out */
+    .hidden {
+      opacity: 0;
+    }
+
+    /* =============================
+       DIVIDER LINE
+       ============================= */
+    .divider {
+      width: 48px;
+      height: 2px;
+      background: var(--accent);
+      margin: 32px 0;
+      border-radius: 2px;
+    }
+
+    /* =============================
+       BUTTON ROW
+       ============================= */
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap; /* wraps on small screens */
+    }
+
+    /* shared button styles */
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      padding: 12px 24px;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px); /* slight lift on hover */
+      opacity: 0.9;
+    }
+
+    button:active {
+      transform: translateY(0); /* press down on click */
+    }
+
+    /* PRIMARY button — New Quote */
+    #new-quote-btn {
+      background: var(--accent);
+      color: #000;
+      font-weight: 600;
+      flex: 1; /* takes up remaining space */
+    }
+
+    /* SECONDARY button — Tweet */
+    #tweet-btn {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid #333;
+    }
+
+    #tweet-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+
+    <!-- QUOTE TEXT: JavaScript will update this -->
+    <p id="quote-text">Click the button to get your first quote!</p>
+
+    <!-- AUTHOR: JavaScript will update this too -->
+    <p id="quote-author"></p>
+
+    <div class="divider"></div>
+
+    <div class="actions">
+      <!-- Button 1: loads a new random quote -->
+      <button id="new-quote-btn">✦ New Quote</button>
+
+      <!-- Button 2: shares the quote on Twitter -->
+      <button id="tweet-btn">Share on 𝕏</button>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       JAVASCRIPT STARTS HERE
+       This is the "brain" of the app.
+       ============================================================ -->
+  <script>
+
+    // ─────────────────────────────────────────
+    // STEP 1: Our list of quotes
+    // Each quote is an OBJECT with two properties:
+    //   text   → the quote itself
+    //   author → who said it
+    // All quotes are stored in an ARRAY (the [...] brackets)
+    // ─────────────────────────────────────────
+    const quotes = [
+      {
+        text: "The only way to do great work is to love what you do.",
+        author: "Steve Jobs"
+      },
+      {
+        text: "It does not matter how slowly you go as long as you do not stop.",
+        author: "Confucius"
+      },
+      {
+        text: "In the middle of every difficulty lies opportunity.",
+        author: "Albert Einstein"
+      },
+      {
+        text: "Life is what happens when you're busy making other plans.",
+        author: "John Lennon"
+      },
+      {
+        text: "The future belongs to those who believe in the beauty of their dreams.",
+        author: "Eleanor Roosevelt"
+      },
+      {
+        text: "Success is not final, failure is not fatal — it is the courage to continue that counts.",
+        author: "Winston Churchill"
+      },
+      {
+        text: "You miss 100% of the shots you don't take.",
+        author: "Wayne Gretzky"
+      },
+      {
+        text: "Whether you think you can or you think you can't, you're right.",
+        author: "Henry Ford"
+      },
+      {
+        text: "The best time to plant a tree was 20 years ago. The second best time is now.",
+        author: "Chinese Proverb"
+      },
+      {
+        text: "An investment in knowledge pays the best interest.",
+        author: "Benjamin Franklin"
+      }
+    ];
+
+
+    // ─────────────────────────────────────────
+    // STEP 2: Get references to HTML elements
+    // document.getElementById() finds an element
+    // by its id="" attribute in the HTML above
+    // ─────────────────────────────────────────
+    const quoteText   = document.getElementById('quote-text');
+    const quoteAuthor = document.getElementById('quote-author');
+    const newQuoteBtn = document.getElementById('new-quote-btn');
+    const tweetBtn    = document.getElementById('tweet-btn');
+
+
+    // ─────────────────────────────────────────
+    // STEP 3: Variable to track the current quote
+    // We store the whole quote object here so the
+    // Tweet button can access it later
+    // ─────────────────────────────────────────
+    let currentQuote = null;
+
+
+    // ─────────────────────────────────────────
+    // STEP 4: The main function — picks a random quote
+    // and updates the screen with a fade animation
+    // ─────────────────────────────────────────
+    function showRandomQuote() {
+
+      // Pick a random index from the array
+      // Math.random() gives a decimal like 0.73
+      // Multiplying by array length gives e.g. 7.3
+      // Math.floor() rounds DOWN to 7 → valid index
+      const randomIndex = Math.floor(Math.random() * quotes.length);
+
+      // Get the quote object at that index
+      currentQuote = quotes[randomIndex];
+
+      // FADE OUT: add the 'hidden' CSS class (opacity → 0)
+      quoteText.classList.add('hidden');
+      quoteAuthor.classList.add('hidden');
+
+      // Wait 400ms (matches CSS transition time), THEN update text
+      // setTimeout runs code after a delay
+      setTimeout(function() {
+
+        // Update the text content of the HTML elements
+        quoteText.textContent   = currentQuote.text;
+        quoteAuthor.textContent = '— ' + currentQuote.author;
+
+        // FADE IN: remove the 'hidden' class (opacity → 1)
+        quoteText.classList.remove('hidden');
+        quoteAuthor.classList.remove('hidden');
+
+      }, 400); // ← 400 milliseconds delay
+    }
+
+
+    // ─────────────────────────────────────────
+    // STEP 5: Tweet button — opens Twitter
+    // with the quote pre-filled
+    // ─────────────────────────────────────────
+    function tweetQuote() {
+      if (!currentQuote) return; // do nothing if no quote loaded yet
+
+      // Build the tweet text
+      const tweetText = '"' + currentQuote.text + '" — ' + currentQuote.author;
+
+      // encodeURIComponent makes the text URL-safe
+      // (spaces become %20, etc.)
+      const twitterUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweetText);
+
+      // Open the URL in a new browser tab
+      window.open(twitterUrl, '_blank');
+    }
+
+
+    // ─────────────────────────────────────────
+    // STEP 6: Attach click listeners to buttons
+    // addEventListener listens for a 'click' event
+    // and runs the function when clicked
+    // ─────────────────────────────────────────
+    newQuoteBtn.addEventListener('click', showRandomQuote);
+    tweetBtn.addEventListener('click', tweetQuote);
+
+
+    // ─────────────────────────────────────────
+    // STEP 7: Load a quote automatically
+    // when the page first opens
+    // ─────────────────────────────────────────
+    showRandomQuote();
+
+  </script>
+
+</body>
+</html>
